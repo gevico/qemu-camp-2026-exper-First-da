@@ -830,3 +830,28 @@ void helper_sort(CPURISCVState *env, target_ulong addr, target_ulong K, target_u
             
         }
 }
+
+void helper_crush(CPURISCVState *env, target_ulong addr_des, target_ulong addr_src, target_ulong N)
+{
+    uintptr_t ra = GETPC();
+    if (N < 1)
+        return ;
+    int32_t j = 0;
+    uint8_t val = 0;
+
+    for (target_ulong i = 0; i < N; i++)
+    {
+        uint8_t temp = cpu_ldub_data_ra(env, addr_src + i, ra);
+        if (i % 2 == 0)
+            val |= temp & 0x0F;
+        else 
+            val |= (temp & 0x0F) << 4; 
+
+        if (i % 2 == 1  || i == N - 1)
+            {
+                cpu_stb_data_ra(env, addr_des + j, val, ra);
+                j++;
+                val = 0;
+            }
+    }
+}

@@ -1244,6 +1244,16 @@ static bool trans_sort(DisasContext *ctx, arg_sort *a)
     return true;
 }
 
+static bool trans_crush(DisasContext *ctx, arg_crush *a)
+{
+
+    TCGv addr_des    = get_gpr(ctx, a->rd, EXT_NONE);
+    TCGv N           = get_gpr(ctx, a->rs2, EXT_NONE);
+    TCGv addr_src    = get_gpr(ctx, a->rs1, EXT_NONE);
+    gen_helper_crush(tcg_env, addr_des, addr_src, N);
+    return true;
+}
+
 static bool trans_expand(DisasContext *ctx, arg_expand *a)
 {
     return false;
@@ -1270,11 +1280,6 @@ static bool trans_vadd(DisasContext *ctx, arg_vadd *a)
 }
 
 static bool trans_vmax(DisasContext *ctx, arg_vmax *a)
-{
-    return false;
-}
-
-static bool trans_crush(DisasContext *ctx, arg_crush *a)
 {
     return false;
 }
