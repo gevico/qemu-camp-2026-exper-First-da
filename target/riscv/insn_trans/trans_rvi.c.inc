@@ -1256,7 +1256,11 @@ static bool trans_crush(DisasContext *ctx, arg_crush *a)
 
 static bool trans_expand(DisasContext *ctx, arg_expand *a)
 {
-    return false;
+    TCGv addr_src = get_gpr(ctx, a->rs1, EXT_NONE);
+    TCGv N       = get_gpr(ctx, a->rs2, EXT_NONE);
+    TCGv addr_des = get_gpr(ctx, a->rd, EXT_NONE);
+    gen_helper_expand(tcg_env, addr_des, addr_src, N);
+    return true;
 }
 
 static bool trans_vdot(DisasContext *ctx, arg_vdot *a)

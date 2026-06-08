@@ -855,3 +855,20 @@ void helper_crush(CPURISCVState *env, target_ulong addr_des, target_ulong addr_s
             }
     }
 }
+
+void helper_expand(CPURISCVState *env, target_ulong addr_des, target_ulong addr_src, target_ulong N)
+{
+    uintptr_t ra = GETPC();
+    if (N < 1)
+        return ;
+
+    for (target_ulong i = 0; i < N; i++)
+        {
+            uint8_t temp = cpu_ldub_data_ra(env, addr_src + i, ra);
+            uint8_t low = temp & 0x0F;
+            uint8_t high = (temp & 0xF0) >> 4;
+            
+            cpu_stb_data_ra(env, addr_des + 2 * i, low, ra);
+            cpu_stb_data_ra(env, addr_des + 2 * i + 1, high, ra);
+        }
+}
