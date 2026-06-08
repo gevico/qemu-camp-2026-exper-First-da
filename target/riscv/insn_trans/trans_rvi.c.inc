@@ -1223,3 +1223,58 @@ static bool trans_csrrci(DisasContext *ctx, arg_csrrci * a)
                              ctx->zero, ctx->zero, mask, ctx->zero);
     }
 }
+
+static bool trans_dma(DisasContext *ctx, arg_dma *a)
+{
+    TCGv dest = get_gpr(ctx, a->rd, EXT_NONE);
+    TCGv src = get_gpr(ctx, a->rs1, EXT_NONE);
+    TCGv size = get_gpr(ctx, a->rs2, EXT_NONE);
+    gen_helper_dma(tcg_env, dest, src, size);
+
+    return true;
+}
+
+static bool trans_sort(DisasContext *ctx, arg_sort *a)
+{
+    return false;
+}
+
+static bool trans_expand(DisasContext *ctx, arg_expand *a)
+{
+    return false;
+}
+
+static bool trans_vdot(DisasContext *ctx, arg_vdot *a)
+{
+    return false;
+}
+
+static bool trans_vrelu(DisasContext *ctx, arg_vrelu *a)
+{
+    return false;
+}
+
+static bool trans_vscale(DisasContext *ctx, arg_vscale *a)
+{
+    return false;
+}
+
+static bool trans_vadd(DisasContext *ctx, arg_vadd *a)
+{
+    return false;
+}
+
+static bool trans_vmax(DisasContext *ctx, arg_vmax *a)
+{
+    return false;
+}
+
+static bool trans_crush(DisasContext *ctx, arg_crush *a)
+{
+    return false;
+}
+
+static bool trans_gemm(DisasContext *ctx, arg_gemm *a)
+{
+    return false;
+}

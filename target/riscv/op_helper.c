@@ -781,3 +781,30 @@ done:
 }
 
 #endif /* !CONFIG_USER_ONLY */
+
+//My xg233_ai instructions
+void helper_dma(CPURISCVState *env, target_ulong dest, target_ulong src, target_ulong size)
+{
+    uintptr_t ra = GETPC();
+    int n;
+    switch (size) {
+        case 0:
+            n = 8;
+            break;
+        case 1:
+            n = 16;
+            break;
+        case 2:
+            n = 32;
+            break;
+        default:
+        return;
+    }
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            {
+                // dest[j * N + i] = src[i * N + j];
+                uint32_t val = cpu_ldl_le_data_ra(env, src + (i * n + j) * 4, ra);
+                cpu_stl_le_data_ra(env, dest + (j * n + i) * 4, val, ra);
+            }
+}
