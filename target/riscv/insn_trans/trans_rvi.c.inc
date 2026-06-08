@@ -1265,7 +1265,14 @@ static bool trans_expand(DisasContext *ctx, arg_expand *a)
 
 static bool trans_vdot(DisasContext *ctx, arg_vdot *a)
 {
-    return false;
+    TCGv rs1 = get_gpr(ctx, a->rs1, EXT_NONE);
+    TCGv rs2 = get_gpr(ctx, a->rs2, EXT_NONE);
+    TCGv tmp = tcg_temp_new();
+
+    gen_helper_vdot(tmp, tcg_env, rs1, rs2);
+    gen_set_gpr(ctx, a->rd, tmp);
+
+    return true;
 }
 
 static bool trans_vrelu(DisasContext *ctx, arg_vrelu *a)

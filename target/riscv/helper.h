@@ -1290,6 +1290,7 @@ DEF_HELPER_4(dma, void, env, tl, tl, tl)
 DEF_HELPER_4(sort, void, env, tl, tl, tl)
 DEF_HELPER_4(crush, void, env, tl, tl, tl)
 DEF_HELPER_4(expand, void, env, tl, tl, tl)
+DEF_HELPER_3(vdot, tl, env, tl, tl)
 
 /* CFI (zicfiss) helpers */
 #ifndef CONFIG_USER_ONLY

@@ -872,3 +872,16 @@ void helper_expand(CPURISCVState *env, target_ulong addr_des, target_ulong addr_
             cpu_stb_data_ra(env, addr_des + 2 * i + 1, high, ra);
         }
 }
+
+target_ulong helper_vdot(CPURISCVState *env, target_ulong rs1, target_ulong rs2)
+{
+    uintptr_t ra = GETPC();
+    int64_t   val = 0;
+    for (int i = 0; i < 16; i++)
+        {
+            int32_t temp1 = cpu_ldl_le_data_ra(env, rs1 + i * 4, ra);
+            int32_t temp2 = cpu_ldl_le_data_ra(env, rs2 + i * 4, ra);
+            val +=  (int64_t)temp1 * (int64_t)temp2;
+        }
+    return (target_ulong)val;
+}
