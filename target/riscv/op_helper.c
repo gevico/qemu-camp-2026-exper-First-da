@@ -808,3 +808,25 @@ void helper_dma(CPURISCVState *env, target_ulong dest, target_ulong src, target_
                 cpu_stl_le_data_ra(env, dest + (j * n + i) * 4, val, ra);
             }
 }
+
+void helper_sort(CPURISCVState *env, target_ulong addr, target_ulong K, target_ulong N)
+{
+    uintptr_t ra = GETPC();
+    if (K <= 1 || N <= 1 || K > N)
+        return ;
+
+    int32_t val_1, val_2;
+
+    for (target_ulong i = 0; i < K - 1; i++)
+        for (target_ulong j = 0; j < K - i - 1;j++)
+        {
+            val_1 = cpu_ldl_le_data_ra(env, addr + j * 4, ra);
+            val_2 = cpu_ldl_le_data_ra(env, addr + (j + 1) * 4, ra);
+            if (val_1 > val_2)
+                {
+                    cpu_stl_le_data_ra(env, addr + j * 4, val_2, ra);
+                    cpu_stl_le_data_ra(env, addr + (j + 1) * 4, val_1, ra);
+                }
+            
+        }
+}
