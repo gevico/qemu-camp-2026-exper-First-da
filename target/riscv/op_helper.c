@@ -930,3 +930,20 @@ target_ulong helper_vmax(CPURISCVState *env, target_ulong src, target_ulong N)
         }
     return (target_ulong)val;
 }
+
+void helper_gemm(CPURISCVState *env, target_ulong dest, target_ulong A, target_ulong B)
+{
+    uintptr_t ra = GETPC();
+    for (int i = 0; i < 4; i++)
+        for(int j = 0; j < 4; j++)
+        {
+            int64_t acc = 0;
+            for (int k = 0; k < 4; k++)
+                {
+                    int32_t temp_1 = cpu_ldl_le_data_ra(env, A + (i * 4 + k) * 4, ra);
+                    int32_t temp_2 = cpu_ldl_le_data_ra(env, B + (k * 4 + j) * 4, ra);
+                    acc += (int64_t )temp_1 * (int64_t)temp_2;
+                }
+                cpu_stl_le_data_ra(env, dest + (i * 4 + j) * 4, (int32_t)acc, ra);
+        }
+}

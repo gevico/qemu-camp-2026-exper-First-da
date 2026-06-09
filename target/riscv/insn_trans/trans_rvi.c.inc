@@ -1315,5 +1315,11 @@ static bool trans_vmax(DisasContext *ctx, arg_vmax *a)
 
 static bool trans_gemm(DisasContext *ctx, arg_gemm *a)
 {
-    return false;
+    TCGv A = get_gpr(ctx, a->rs1, EXT_NONE);
+    TCGv B = get_gpr(ctx, a->rs2, EXT_NONE);
+    TCGv dest = get_gpr(ctx, a->rd, EXT_NONE);
+
+    gen_helper_gemm(tcg_env, dest, A, B);
+
+    return true;
 }
