@@ -900,3 +900,14 @@ void helper_vrelu(CPURISCVState *env, target_ulong dest, target_ulong src, targe
             cpu_stl_le_data_ra(env, dest + i * 4, temp, ra);
         }
 }
+
+void helper_vscale(CPURISCVState *env, target_ulong dest, target_ulong src, target_ulong coe)
+{
+    uintptr_t ra = GETPC();
+    for (int i = 0; i < 16; i++)
+        {
+            int32_t temp = (int32_t)cpu_ldl_le_data_ra(env, src + i * 4, ra);
+            int64_t val = (int64_t)temp * (int64_t)coe;
+            cpu_stl_le_data_ra(env, dest + i * 4, (int32_t)val, ra);
+        }
+}

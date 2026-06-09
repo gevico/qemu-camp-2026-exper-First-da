@@ -1288,7 +1288,13 @@ static bool trans_vrelu(DisasContext *ctx, arg_vrelu *a)
 
 static bool trans_vscale(DisasContext *ctx, arg_vscale *a)
 {
-    return false;
+    TCGv src = get_gpr(ctx, a->rs1, EXT_NONE);
+    TCGv coe = get_gpr(ctx, a->rs2, EXT_NONE);
+    TCGv dest = get_gpr(ctx, a->rd, EXT_NONE);
+    
+    gen_helper_vscale(tcg_env, dest, src, coe);
+
+    return true;
 }
 
 static bool trans_vadd(DisasContext *ctx, arg_vadd *a)
