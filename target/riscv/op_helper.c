@@ -947,3 +947,15 @@ void helper_gemm(CPURISCVState *env, target_ulong dest, target_ulong A, target_u
                 cpu_stl_le_data_ra(env, dest + (i * 4 + j) * 4, (int32_t)acc, ra);
         }
 }
+
+void helper_vadd(CPURISCVState *env, target_ulong dest, target_ulong A, target_ulong B)
+{
+    uintptr_t ra = GETPC();
+    for (int i = 0; i < 16; i++)
+    {
+        int32_t temp1 = (int32_t)cpu_ldl_le_data_ra(env, A + i * 4, ra);
+        int32_t temp2 = (int32_t)cpu_ldl_le_data_ra(env, B + i * 4, ra);
+        int32_t val = temp1 + temp2;
+        cpu_stl_le_data_ra(env, dest + i * 4, (uint32_t)val, ra);
+    }
+}

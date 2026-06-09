@@ -1299,7 +1299,13 @@ static bool trans_vscale(DisasContext *ctx, arg_vscale *a)
 
 static bool trans_vadd(DisasContext *ctx, arg_vadd *a)
 {
-    return false;
+    TCGv A      = get_gpr(ctx, a->rs1, EXT_NONE);
+    TCGv B      = get_gpr(ctx, a->rs2, EXT_NONE);
+    TCGv dest   = get_gpr(ctx, a->rd, EXT_NONE);
+
+    gen_helper_vadd(tcg_env, dest, A, B);
+
+    return true;
 }
 
 static bool trans_vmax(DisasContext *ctx, arg_vmax *a)
