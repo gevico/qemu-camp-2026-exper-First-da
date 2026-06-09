@@ -1304,7 +1304,13 @@ static bool trans_vadd(DisasContext *ctx, arg_vadd *a)
 
 static bool trans_vmax(DisasContext *ctx, arg_vmax *a)
 {
-    return false;
+    TCGv src = get_gpr(ctx, a->rs1, EXT_NONE);
+    TCGv N = get_gpr(ctx, a->rs2, EXT_NONE);
+    TCGv dest_val = tcg_temp_new();
+
+    gen_helper_vmax(dest_val, tcg_env, src, N);
+    gen_set_gpr(ctx, a->rd, dest_val);
+    return true;
 }
 
 static bool trans_gemm(DisasContext *ctx, arg_gemm *a)

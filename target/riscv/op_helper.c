@@ -911,3 +911,22 @@ void helper_vscale(CPURISCVState *env, target_ulong dest, target_ulong src, targ
             cpu_stl_le_data_ra(env, dest + i * 4, (int32_t)val, ra);
         }
 }
+
+target_ulong helper_vmax(CPURISCVState *env, target_ulong src, target_ulong N)
+{
+    uintptr_t ra = GETPC();
+    if (N < 1)
+        return 0;
+
+    int32_t val;
+
+    for (target_ulong i = 0; i < N; i++)
+        {
+            int32_t temp = (int32_t)cpu_ldl_le_data_ra(env, src + i * 4, ra);
+            if (i == 0)
+                val = temp;
+            else if (temp > val)
+                val = temp;
+        }
+    return (target_ulong)val;
+}
