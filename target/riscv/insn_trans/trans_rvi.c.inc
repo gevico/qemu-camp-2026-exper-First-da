@@ -1277,7 +1277,13 @@ static bool trans_vdot(DisasContext *ctx, arg_vdot *a)
 
 static bool trans_vrelu(DisasContext *ctx, arg_vrelu *a)
 {
-    return false;
+    TCGv src = get_gpr(ctx, a->rs1, EXT_NONE);
+    TCGv N = get_gpr(ctx, a->rs2, EXT_NONE);
+    TCGv dest = get_gpr(ctx, a->rd, EXT_NONE);
+
+    gen_helper_vrelu(tcg_env, dest, src, N);
+
+    return true;
 }
 
 static bool trans_vscale(DisasContext *ctx, arg_vscale *a)

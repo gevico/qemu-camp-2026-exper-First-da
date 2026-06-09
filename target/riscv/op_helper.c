@@ -885,3 +885,18 @@ target_ulong helper_vdot(CPURISCVState *env, target_ulong rs1, target_ulong rs2)
         }
     return (target_ulong)val;
 }
+
+void helper_vrelu(CPURISCVState *env, target_ulong dest, target_ulong src, target_ulong N)
+{
+    uintptr_t ra = GETPC();
+    if (N < 1)
+        return ;
+
+    for (target_ulong i = 0; i < N; i++)
+        {
+            int32_t temp = cpu_ldl_le_data_ra(env, src + i *4, ra);
+            if (temp < 0)
+                temp = 0;
+            cpu_stl_le_data_ra(env, dest + i * 4, temp, ra);
+        }
+}
