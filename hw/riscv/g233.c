@@ -29,6 +29,7 @@
 #include "hw/core/qdev-properties.h"
 #include "hw/char/serial-mm.h"
 #include "hw/char/pl011.h"
+#include "system/memory.h"
 #include "target/riscv/cpu.h"
 #include "hw/core/sysbus-fdt.h"
 #include "target/riscv/pmu.h"
@@ -59,6 +60,8 @@
 #include "qapi/qapi-visit-common.h"
 #include "hw/virtio/virtio-iommu.h"
 #include "hw/uefi/var-service-api.h"
+
+#define TYPE_G233_GPIO "g233-gpio"
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool g233_use_kvm_aia_aplic_imsic(RISCVG233AIAType aia_type)
@@ -95,6 +98,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_APLIC_S] =      {  0xd000000, APLIC_SIZE(VIRT_CPUS_MAX) },
     [VIRT_UART0] =        { 0x10000000,         0x100 },
     [VIRT_VIRTIO] =       { 0x10001000,        0x1000 },
+    [VIRT_GPIO] =         { 0x10012000,         0x100 },
     [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
     [VIRT_FLASH] =        { 0x20000000,     0x4000000 },
     [VIRT_IMSIC_M] =      { 0x24000000, VIRT_IMSIC_MAX_SIZE },
@@ -1538,6 +1542,14 @@ static void virt_machine_init(MachineState *machine)
     int i, base_hartid, hart_count;
     int socket_count = riscv_socket_count(machine);
 
+    //==========================================================
+    //new device
+
+    //2.gpio-basic
+    DeviceState *gpio;
+    SysBusDevice * gpio_sbd;
+    //==========================================================
+
     s->memmap = virt_memmap;
 
     /* Check socket count limit */
@@ -1711,6 +1723,18 @@ static void virt_machine_init(MachineState *machine)
     pl011_create(s->memmap[VIRT_UART0].base,
                  qdev_get_gpio_in(mmio_irqchip, UART0_IRQ),
                  serial_hd(0));
+
+    //============================================================================
+    //gpio_basic
+
+    gpio = qdev_new(TYPE_G233_GPIO);
+    gpio_sbd = SYS_BUS_DEVICE(gpio);
+
+    sysbus_realize_and_unref(gpio_sbd, &error_fatal);
+    memory_region_add_subregion(system_memory, s->memmap[VIRT_GPIO].base, sysbus_mmio_get_region(gpio_sbd, 0));
+    sysbus_connect_irq(gpio_sbd, 0, qdev_get_gpio_in(mmio_irqchip, 2));
+    //============================================================================
+
 
     sysbus_create_simple("goldfish_rtc", s->memmap[VIRT_RTC].base,
         qdev_get_gpio_in(mmio_irqchip, RTC_IRQ));
