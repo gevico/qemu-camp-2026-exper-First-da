@@ -33,6 +33,35 @@ struct G233GPIOState {
     uint32_t pol;
 };
 
+static uint32_t g233_gpio_get_level(G233GPIOState *s)
+{
+    return ((s->dir & s->out) | (~s->dir & s->in)) ; 
+}
+
+static void g233_gpio_update_irq(G233GPIOState *s, uint32_t old_level, uint32_t new_level)
+{
+    uint32_t rising;
+    uint32_t falling;
+    uint32_t edge_status;
+    uint32_t level_status;
+
+    rising = new_level & ~old_level;
+    falling = ~new_level & old_level;
+
+    //edge trigger irq
+    edge_status = ~s->trig & ((~s->pol & falling) | (s->pol & rising));
+    edge_status &= s->ie;
+    s->is |= edge_status;
+
+    //level trigger irq
+    level_status = s->trig & ((~s->pol & ~new_level) | (s->pol & new_level));
+    level_status &= s->ie;
+    s->is = (s->is & ~s->trig) | level_status;
+    
+    qemu_set_irq(s->irq, (s->is & s->ie) != 0);
+}
+
+
 static uint64_t g233_gpio_read(void *opaque, hwaddr offset, unsigned size)
 {
     G233GPIOState * s = (G233GPIOState *)opaque;
@@ -65,16 +94,27 @@ static void g233_gpio_write(void *opaque, hwaddr offset, uint64_t value, unsigne
             s->dir = (uint32_t)value;
             break;
         case GPIO_OUT:
-            s->out = (uint32_t)value;
-            break;
+            {
+                uint32_t old_level, new_level;
+                old_level = g233_gpio_get_level(s);
+                s->out = (uint32_t)value;
+                new_level = g233_gpio_get_level(s);
+                
+                g233_gpio_update_irq(s, old_level, new_level);
+                break;
+            }
         case GPIO_IN:
             break;
         case GPIO_IE:
             s->ie = (uint32_t)value;
+            qemu_set_irq(s->irq, (s->is & s->ie) !=0);
             break;
         case GPIO_IS:
-            s->is &= ~(uint32_t)value;
-            break;
+            {
+                s->is &= ~(uint32_t)value;
+                qemu_set_irq(s->irq, (s->is & s->ie) !=0);
+                break;
+            }
         case GPIO_TRIG:
             s->trig = (uint32_t)value;
             break;
@@ -98,12 +138,14 @@ static void g233_gpio_reset(DeviceState *dev)
     s->is       = 0x00000000;
     s->trig     = 0x00000000;
     s->pol      = 0x00000000;
+
+    qemu_set_irq(s->irq, 0);
 }
 
 static const MemoryRegionOps g233_gpio_ops = {
     .read = g233_gpio_read,
     .write = g233_gpio_write,
-    .endianness = DEVICE_NATIVE_ENDIAN
+    .endianness = DEVICE_LITTLE_ENDIAN
 };
 
 static void g233_gpio_init(Object *obj)
