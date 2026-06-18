@@ -62,6 +62,7 @@
 #include "hw/uefi/var-service-api.h"
 
 #define TYPE_G233_GPIO "g233-gpio"
+#define TYPE_G233_PWM  "g233-pwm"
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool g233_use_kvm_aia_aplic_imsic(RISCVG233AIAType aia_type)
@@ -99,6 +100,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_UART0] =        { 0x10000000,         0x100 },
     [VIRT_VIRTIO] =       { 0x10001000,        0x1000 },
     [VIRT_GPIO] =         { 0x10012000,         0x100 },
+    [VIRT_PWM] =          { 0x10015000,         0x1000},
     [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
     [VIRT_FLASH] =        { 0x20000000,     0x4000000 },
     [VIRT_IMSIC_M] =      { 0x24000000, VIRT_IMSIC_MAX_SIZE },
@@ -1548,6 +1550,10 @@ static void virt_machine_init(MachineState *machine)
     //2.gpio-basic
     DeviceState *gpio;
     SysBusDevice * gpio_sbd;
+
+    //4.pwm
+    DeviceState *pwm;
+    SysBusDevice * pwm_sbd;
     //==========================================================
 
     s->memmap = virt_memmap;
@@ -1733,6 +1739,13 @@ static void virt_machine_init(MachineState *machine)
     sysbus_realize_and_unref(gpio_sbd, &error_fatal);
     memory_region_add_subregion(system_memory, s->memmap[VIRT_GPIO].base, sysbus_mmio_get_region(gpio_sbd, 0));
     sysbus_connect_irq(gpio_sbd, 0, qdev_get_gpio_in(mmio_irqchip, 2));
+
+    //pwm
+    pwm = qdev_new(TYPE_G233_PWM);
+    pwm_sbd = SYS_BUS_DEVICE(pwm);
+    sysbus_realize_and_unref(pwm_sbd, &error_fatal);
+    memory_region_add_subregion(system_memory, s->memmap[VIRT_PWM].base, sysbus_mmio_get_region(pwm_sbd, 0));
+    sysbus_connect_irq(pwm_sbd, 0, qdev_get_gpio_in(mmio_irqchip, 3));
     //============================================================================
 
 

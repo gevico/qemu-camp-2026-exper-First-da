@@ -81,6 +81,7 @@ enum {
     VIRT_UART0,
     VIRT_VIRTIO,
     VIRT_GPIO,
+    VIRT_PWM,
     VIRT_FW_CFG,
     VIRT_IMSIC_M,
     VIRT_IMSIC_S,
