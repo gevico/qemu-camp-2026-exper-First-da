@@ -80,6 +80,7 @@ enum {
     VIRT_APLIC_S,
     VIRT_UART0,
     VIRT_VIRTIO,
+    VIRT_WDT,
     VIRT_GPIO,
     VIRT_PWM,
     VIRT_FW_CFG,

@@ -63,6 +63,7 @@
 
 #define TYPE_G233_GPIO "g233-gpio"
 #define TYPE_G233_PWM  "g233-pwm"
+#define TYPE_G233_WDT  "g233-wdt"
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool g233_use_kvm_aia_aplic_imsic(RISCVG233AIAType aia_type)
@@ -99,6 +100,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_APLIC_S] =      {  0xd000000, APLIC_SIZE(VIRT_CPUS_MAX) },
     [VIRT_UART0] =        { 0x10000000,         0x100 },
     [VIRT_VIRTIO] =       { 0x10001000,        0x1000 },
+    [VIRT_WDT]  =         { 0x10010000,        0x1000 },
     [VIRT_GPIO] =         { 0x10012000,         0x100 },
     [VIRT_PWM] =          { 0x10015000,         0x1000},
     [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
@@ -1554,6 +1556,10 @@ static void virt_machine_init(MachineState *machine)
     //4.pwm
     DeviceState *pwm;
     SysBusDevice * pwm_sbd;
+
+    //5.wdt
+    DeviceState *wdt;
+    SysBusDevice *wdt_sbd;
     //==========================================================
 
     s->memmap = virt_memmap;
@@ -1746,6 +1752,13 @@ static void virt_machine_init(MachineState *machine)
     sysbus_realize_and_unref(pwm_sbd, &error_fatal);
     memory_region_add_subregion(system_memory, s->memmap[VIRT_PWM].base, sysbus_mmio_get_region(pwm_sbd, 0));
     sysbus_connect_irq(pwm_sbd, 0, qdev_get_gpio_in(mmio_irqchip, 3));
+
+    //wdt
+    wdt = qdev_new(TYPE_G233_WDT);
+    wdt_sbd = SYS_BUS_DEVICE(wdt);
+    sysbus_realize_and_unref(wdt_sbd, &error_fatal);
+    memory_region_add_subregion(system_memory, s->memmap[VIRT_WDT].base, sysbus_mmio_get_region(wdt_sbd, 0));
+    sysbus_connect_irq(wdt_sbd, 0, qdev_get_gpio_in(mmio_irqchip, 4));
     //============================================================================
 
 
