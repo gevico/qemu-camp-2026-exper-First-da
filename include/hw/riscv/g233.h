@@ -83,6 +83,7 @@ enum {
     VIRT_WDT,
     VIRT_GPIO,
     VIRT_PWM,
+    VIRT_SPI,
     VIRT_FW_CFG,
     VIRT_IMSIC_M,
     VIRT_IMSIC_S,

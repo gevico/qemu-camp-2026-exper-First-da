@@ -19,6 +19,7 @@
  */
 
 #include "qemu/osdep.h"
+#include "qemu/typedefs.h"
 #include "qemu/units.h"
 #include "qemu/error-report.h"
 #include "qemu/guest-random.h"
@@ -60,10 +61,14 @@
 #include "qapi/qapi-visit-common.h"
 #include "hw/virtio/virtio-iommu.h"
 #include "hw/uefi/var-service-api.h"
+#include "hw/core/qdev.h"
+#include "hw/ssi/ssi.h"
+
 
 #define TYPE_G233_GPIO "g233-gpio"
 #define TYPE_G233_PWM  "g233-pwm"
 #define TYPE_G233_WDT  "g233-wdt"
+#define TYPE_G233_SPI  "g233-spi"
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool g233_use_kvm_aia_aplic_imsic(RISCVG233AIAType aia_type)
@@ -103,6 +108,7 @@ static const MemMapEntry virt_memmap[] = {
     [VIRT_WDT]  =         { 0x10010000,        0x1000 },
     [VIRT_GPIO] =         { 0x10012000,         0x100 },
     [VIRT_PWM] =          { 0x10015000,         0x1000},
+    [VIRT_SPI] =          { 0x10018000,         0x1000},
     [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
     [VIRT_FLASH] =        { 0x20000000,     0x4000000 },
     [VIRT_IMSIC_M] =      { 0x24000000, VIRT_IMSIC_MAX_SIZE },
@@ -1560,6 +1566,10 @@ static void virt_machine_init(MachineState *machine)
     //5.wdt
     DeviceState *wdt;
     SysBusDevice *wdt_sbd;
+
+    //6.spi
+    DeviceState *spi;
+    SysBusDevice *spi_sbd;
     //==========================================================
 
     s->memmap = virt_memmap;
@@ -1759,6 +1769,19 @@ static void virt_machine_init(MachineState *machine)
     sysbus_realize_and_unref(wdt_sbd, &error_fatal);
     memory_region_add_subregion(system_memory, s->memmap[VIRT_WDT].base, sysbus_mmio_get_region(wdt_sbd, 0));
     sysbus_connect_irq(wdt_sbd, 0, qdev_get_gpio_in(mmio_irqchip, 4));
+
+    //spi
+    spi = qdev_new(TYPE_G233_SPI);
+    spi_sbd = SYS_BUS_DEVICE(spi);
+    sysbus_realize_and_unref(spi_sbd, &error_fatal);
+    memory_region_add_subregion(system_memory, s->memmap[VIRT_SPI].base, sysbus_mmio_get_region(spi_sbd, 0));
+    sysbus_connect_irq(spi_sbd, 0, qdev_get_gpio_in(mmio_irqchip, 5));
+
+    BusState *bus;
+    SSIBus *ssi_bus;
+    bus = qdev_get_child_bus(spi, "ssi-spi");
+    ssi_bus = (SSIBus *)bus;
+    ssi_create_peripheral(ssi_bus, "w25x16");
     //============================================================================
 
 
