@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include "hw/ssi/ssi.h"
 #include "exec/hwaddr.h"
+#include "hw/core/qdev.h"
 
 #define TYPE_G233_SPI "g233-spi"
 OBJECT_DECLARE_SIMPLE_TYPE(G233SPIState, G233_SPI)
@@ -33,6 +34,18 @@ OBJECT_DECLARE_SIMPLE_TYPE(G233SPIState, G233_SPI)
 #define SPI_SR_TXE          (1u << 1)
 #define SPI_SR_OVERRUN      (1u << 4)
 
+// //flash cmd
+// #define FLASH_CMD_WRITE_ENABLE          0x06
+// #define FLASH_CMD_WRITE_JEDEC_ID        0x9F
+// #define FLASH_CMD_WRITE_RDSR            0x05
+// #define FLASH_CMD_WRITE_WRDI            0x04
+// #define FLASH_CMD_WRITE_SE              0x20
+// #define FLASH_CMD_WRITE_PP              0x02
+// #define FLASH_CMD_WRITE_READ            0x03
+
+// #define FLASH_SR_BUSY       (1u << 0)
+// #define FLASH_SR_WEL        (1u << 1)
+
 struct G233SPIState {
     SysBusDevice parent_obj;
 
@@ -43,6 +56,8 @@ struct G233SPIState {
     uint32_t cr2;
     uint32_t sr;
     uint32_t dr;
+
+    qemu_irq cs[4];
 
     SSIBus * ssi;
 };
@@ -83,7 +98,10 @@ static void g233_spi_write(void *opaque, hwaddr offset, uint64_t value, unsigned
             }
         case SPI_CR2:
             {
-                s->cr2 = SPI_CR2_CS & value;
+                uint32_t temp = SPI_CR2_CS & value;
+                for (uint32_t i = 0; i < 4; i++)
+                    qemu_set_irq(s->cs[i], !(i == temp));
+                s->cr2 = temp;
                 //int update
                 return ;
             }
@@ -120,6 +138,8 @@ static void g233_spi_reset(DeviceState *dev)
     s->sr  = 0x02;
     s->dr  = 0;
 
+    for (int i = 0; i < 4; i ++)
+        qemu_set_irq(s->cs[i], 1);
     //int update
     //qemu_set_irq(s->irq, 0);
 }
@@ -136,11 +156,13 @@ static void g233_spi_init(Object *obj)
     G233SPIState *s = G233_SPI(obj);
     SysBusDevice *sbd = SYS_BUS_DEVICE(obj);
 
+    qdev_init_gpio_out_named(DEVICE(obj), s->cs, "spi-cs", 4);
+
     memory_region_init_io(&s->iomem, obj, &g233_spi_ops, s, TYPE_G233_SPI, SPI_SIZE);
     sysbus_init_mmio(sbd, &s->iomem);
     sysbus_init_irq(sbd, &s->irq);
 
-    s->ssi = ssi_create_bus((DeviceState *)s, "ssi-spi");
+    s->ssi = ssi_create_bus((DeviceState *)s, "ssi-spi-bus");
 }
 
 static void g233_spi_class_init(ObjectClass *klass, const void *data)

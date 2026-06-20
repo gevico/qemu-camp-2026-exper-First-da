@@ -1777,13 +1777,20 @@ static void virt_machine_init(MachineState *machine)
     memory_region_add_subregion(system_memory, s->memmap[VIRT_SPI].base, sysbus_mmio_get_region(spi_sbd, 0));
     sysbus_connect_irq(spi_sbd, 0, qdev_get_gpio_in(mmio_irqchip, 5));
 
-    BusState *bus;
-    SSIBus *ssi_bus;
-    bus = qdev_get_child_bus(spi, "ssi-spi");
-    ssi_bus = (SSIBus *)bus;
-    ssi_create_peripheral(ssi_bus, "w25x16");
-    //============================================================================
+    BusState *spi_bus;
+    SSIBus *spi_ssi_bus;
+    DeviceState * flash_spi;
+    // DeviceState * flash_spi_extend;
 
+    spi_bus = qdev_get_child_bus(spi, "ssi-spi-bus");
+    spi_ssi_bus = (SSIBus *)spi_bus;
+
+    flash_spi = ssi_create_peripheral(spi_ssi_bus, "w25x16");
+    // flash_spi_extend = ssi_create_peripheral(spi_ssi_bus, "w25x32");
+
+    qdev_connect_gpio_out_named(spi, "spi-cs", 0, qdev_get_gpio_in_named(flash_spi, SSI_GPIO_CS, 0));
+    // qdev_connect_gpio_out_named(spi, "spi-cs", 1, qdev_get_gpio_in_named(flash_spi_extend, SSI_GPIO_CS, 0));
+    //============================================================================
 
     sysbus_create_simple("goldfish_rtc", s->memmap[VIRT_RTC].base,
         qdev_get_gpio_in(mmio_irqchip, RTC_IRQ));
