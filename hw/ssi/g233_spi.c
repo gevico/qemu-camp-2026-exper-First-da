@@ -62,6 +62,16 @@ struct G233SPIState {
     SSIBus * ssi;
 };
 
+static void g233_spi_update_irq(void *opaque)
+{
+    G233SPIState *s = (G233SPIState *)opaque;
+    bool tx_int = (SPI_CR1_TXEIE & s->cr1) && (s->sr & SPI_SR_TXE);
+    bool rx_int = ((SPI_CR1_RXNEIE & s->cr1) && (s->sr & SPI_SR_RXNE));
+    bool overrun_int = ((SPI_CR1_ERRIE & s->cr1) && (s->sr & SPI_SR_OVERRUN));
+
+    qemu_set_irq(s->irq, tx_int | rx_int | overrun_int);
+}
+
 static uint64_t g233_spi_read(void *opaque, hwaddr offset, unsigned size)
 {
     G233SPIState *s = (G233SPIState *)opaque;
@@ -76,6 +86,7 @@ static uint64_t g233_spi_read(void *opaque, hwaddr offset, unsigned size)
             {
                 s->sr &= ~(SPI_SR_RXNE);
                 //int update
+                g233_spi_update_irq(s);
                 return s->dr & 0xFF;
             }
         default:
@@ -94,6 +105,7 @@ static void g233_spi_write(void *opaque, hwaddr offset, uint64_t value, unsigned
             {
                 s->cr1 = value & (SPI_CR1_SPE | SPI_CR1_MSTR | SPI_CR1_ERRIE | SPI_CR1_RXNEIE | SPI_CR1_TXEIE);
                 //int update
+                g233_spi_update_irq(s);
                 return ;
             }
         case SPI_CR2:
@@ -103,12 +115,14 @@ static void g233_spi_write(void *opaque, hwaddr offset, uint64_t value, unsigned
                     qemu_set_irq(s->cs[i], !(i == temp));
                 s->cr2 = temp;
                 //int update
+                g233_spi_update_irq(s);
                 return ;
             }
         case SPI_SR:
             {
                 s->sr &= ~(SPI_SR_OVERRUN & value);
                 //int update
+                g233_spi_update_irq(s);
                 return ;
             }
         case SPI_DR:
@@ -118,6 +132,7 @@ static void g233_spi_write(void *opaque, hwaddr offset, uint64_t value, unsigned
                 s->dr = ssi_transfer(s->ssi, value & 0xFF) & 0xFF;
                 s->sr |= SPI_SR_TXE;
                 s->sr |= SPI_SR_RXNE;
+                g233_spi_update_irq(s);
                 return;
             }
         default:
@@ -142,6 +157,7 @@ static void g233_spi_reset(DeviceState *dev)
         qemu_set_irq(s->cs[i], 1);
     //int update
     //qemu_set_irq(s->irq, 0);
+    g233_spi_update_irq(s);
 }
 
 static struct MemoryRegionOps g233_spi_ops = {
