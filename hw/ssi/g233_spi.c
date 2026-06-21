@@ -156,7 +156,6 @@ static void g233_spi_reset(DeviceState *dev)
     for (int i = 0; i < 4; i ++)
         qemu_set_irq(s->cs[i], 1);
     //int update
-    //qemu_set_irq(s->irq, 0);
     g233_spi_update_irq(s);
 }
 

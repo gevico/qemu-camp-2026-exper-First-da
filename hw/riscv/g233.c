@@ -1780,16 +1780,21 @@ static void virt_machine_init(MachineState *machine)
     BusState *spi_bus;
     SSIBus *spi_ssi_bus;
     DeviceState * flash_spi;
-    // DeviceState * flash_spi_extend;
-
+    DeviceState * flash_spi_extend;
+    
     spi_bus = qdev_get_child_bus(spi, "ssi-spi-bus");
     spi_ssi_bus = (SSIBus *)spi_bus;
 
-    flash_spi = ssi_create_peripheral(spi_ssi_bus, "w25x16");
-    // flash_spi_extend = ssi_create_peripheral(spi_ssi_bus, "w25x32");
+    flash_spi = qdev_new("w25x16");
+    qdev_prop_set_uint8(flash_spi, "cs", 0);
+    ssi_realize_and_unref(flash_spi, spi_ssi_bus, &error_fatal);
+
+    flash_spi_extend = qdev_new("w25x32");
+    qdev_prop_set_uint8(flash_spi_extend, "cs", 1);
+    ssi_realize_and_unref(flash_spi_extend, spi_ssi_bus, &error_fatal);
 
     qdev_connect_gpio_out_named(spi, "spi-cs", 0, qdev_get_gpio_in_named(flash_spi, SSI_GPIO_CS, 0));
-    // qdev_connect_gpio_out_named(spi, "spi-cs", 1, qdev_get_gpio_in_named(flash_spi_extend, SSI_GPIO_CS, 0));
+    qdev_connect_gpio_out_named(spi, "spi-cs", 1, qdev_get_gpio_in_named(flash_spi_extend, SSI_GPIO_CS, 0));
     //============================================================================
 
     sysbus_create_simple("goldfish_rtc", s->memmap[VIRT_RTC].base,
